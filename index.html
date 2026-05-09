@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#3d2818">
+<title>かせきほり｜Fossil Dig</title>
+<meta name="description" content="こすって ほって、本物のかせきを みつけよう。Brush sand off real fossils — Nipponites, T-rex, trilobite & more. Ages 5–9.">
+<meta property="og:title" content="かせきほり｜Fossil Dig">
+<meta property="og:description" content="こすって ほって、本物のかせきを みつけよう。10種のかせき図鑑つき。">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
+html, body {
+  height: 100%; overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none; user-select: none;
+  touch-action: none;
+}
+body {
+  font-family: "Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI",system-ui,sans-serif;
+  background: linear-gradient(180deg,#f0e0c0 0%,#d4a373 100%);
+  color:#3d2818;
+  position: fixed; inset:0;
+}
+.screen { position: fixed; inset:0; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 1em; }
+.screen.active { display: flex; }
+
+/* ---- Title ---- */
+#title h1 { font-size: clamp(2.5rem,12vw,4.5rem); letter-spacing:.12em; margin-bottom:.2em; text-shadow:3px 3px 0 #d4a373; }
+#title .sub { font-size: clamp(1rem,4vw,1.2rem); color:#5a3a1f; margin-bottom:2em; text-align:center; line-height:1.6; max-width:300px; }
+#title .deco { font-size: 2.4rem; letter-spacing:.4em; opacity:.7; line-height:1.4; }
+#title .start {
+  background:#3d2818; color:#f0e0c0; border:none;
+  font-size: clamp(1.2rem,5vw,1.5rem); padding:.8em 2.5em; border-radius:999px;
+  font-family:inherit; cursor:pointer; box-shadow:0 5px 0 #2a1a10;
+  transition: transform .08s, box-shadow .08s;
+  font-weight: bold; letter-spacing: .1em;
+}
+#title .start:active { transform: translateY(3px); box-shadow:0 2px 0 #2a1a10; }
+#title .age { font-size:.9rem; color:#5a3a1f; margin-top:1.5em; opacity:.8; }
+
+/* ---- Game ---- */
+#game { padding: 0; }
+#game .stage-wrap {
+  position: relative;
+  width: min(100vw, calc(100vh - 56px));
+  height: min(100vw, calc(100vh - 56px));
+}
+#rock {
+  width: 100%; height: 100%;
+  display:block;
+  background:#d4a373;
+  cursor: crosshair;
+  touch-action: none;
+}
+#hud {
+  position: absolute; top:0; left:0; right:0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: .55em .8em; pointer-events: none;
+  background: linear-gradient(180deg, rgba(61,40,24,.85), transparent);
+  color:#f0e0c0;
+  z-index: 5;
+}
+#hud .progress {
+  flex:1; max-width: 200px; height: 14px; border-radius:7px;
+  background: rgba(0,0,0,.35); margin: 0 .8em; overflow: hidden;
+  border: 1px solid rgba(255,255,255,.2);
+}
+#hud .progress-bar {
+  height:100%; width:0%; background: linear-gradient(90deg,#f0e0c0,#fff);
+  transition: width .25s;
+}
+#hud .menu-btn {
+  background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+  color:#f0e0c0; font-family:inherit; font-size:.85rem;
+  padding:.35em .8em; border-radius:999px; cursor:pointer;
+  pointer-events:auto; backdrop-filter: blur(4px);
+}
+#hud .menu-btn:active { background: rgba(255,255,255,.3); }
+#hint {
+  position: absolute; bottom: 8px; left:50%; transform: translateX(-50%);
+  color:#f0e0c0; background: rgba(61,40,24,.75); padding:.4em .9em;
+  border-radius: 999px; font-size:.8rem; pointer-events:none;
+  opacity: 1; transition: opacity .8s;
+}
+#hint.fade { opacity: 0; }
+
+/* ---- Card overlay ---- */
+#card {
+  position: fixed; inset:0; background: rgba(61,40,24,.7);
+  display: none; align-items: center; justify-content: center;
+  z-index: 30; padding: 1em; backdrop-filter: blur(4px);
+}
+#card.active { display: flex; }
+.card-inner {
+  background:#f0e0c0; border-radius:20px; padding: 1.8em 1.4em;
+  max-width: 360px; width: 100%; text-align: center;
+  box-shadow: 0 12px 40px rgba(0,0,0,.4);
+  animation: pop .35s cubic-bezier(.34,1.56,.64,1);
+  border: 4px solid #3d2818;
+}
+@keyframes pop { from { transform: scale(.5); opacity:0; } to { transform: scale(1); opacity:1; } }
+.card-inner .silhouette {
+  width: 130px; height: 130px; margin: 0 auto 1em;
+  border-radius: 50%; overflow: hidden; box-shadow: inset 0 0 0 3px #3d2818;
+}
+.card-inner h2 { font-size:1.6rem; margin-bottom:.1em; color:#3d2818; }
+.card-inner .sci { font-size:.85rem; font-style: italic; color:#7a5a3f; margin-bottom:1em; }
+.card-inner .fact { font-size: 1rem; line-height:1.65; margin-bottom:.6em; color:#3d2818; padding: 0 .3em; }
+.card-inner .where { font-size:.8rem; color:#7a5a3f; margin-bottom:1.4em; font-weight:bold; }
+.card-inner .next-btn {
+  background:#3d2818; color:#f0e0c0; border:none;
+  font-size: 1.1rem; padding:.7em 2em; border-radius:999px;
+  font-family:inherit; cursor:pointer; box-shadow: 0 4px 0 #2a1a10;
+  font-weight: bold;
+}
+.card-inner .next-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 #2a1a10; }
+
+/* ---- Collection ---- */
+#collection {
+  position: fixed; inset:0; background:#f0e0c0;
+  display: none; flex-direction: column; padding: 1em;
+  z-index: 40; overflow-y: auto;
+}
+#collection.active { display: flex; }
+#collection h2 { text-align: center; margin: .3em 0 .2em; font-size: 1.5rem; }
+#collection .count-line { text-align:center; color:#5a3a1f; margin-bottom: 1.2em; font-size: .95rem; }
+.fossil-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(95px,1fr));
+  gap: .7em; max-width: 540px; margin: 0 auto; width:100%;
+}
+.fossil-cell {
+  aspect-ratio: 1; background:#a89070; border-radius: 14px;
+  display:flex; flex-direction: column; align-items: center; justify-content: center;
+  position: relative; padding: 4px;
+  border: 2px solid transparent;
+}
+.fossil-cell.found { background:#d4a373; border-color:#3d2818; }
+.fossil-cell canvas { width: 75%; height: 75%; opacity:.35; image-rendering: auto; }
+.fossil-cell.found canvas { opacity:1; }
+.fossil-cell .label { font-size:.65rem; color:#3d2818; font-weight:bold; margin-top: 2px; line-height: 1.1; text-align:center; }
+.fossil-cell .qmark { position: absolute; font-size:1.6rem; color:rgba(61,40,24,.4); font-weight: bold; }
+.fossil-cell.found .qmark { display:none; }
+#collection .close {
+  background:#3d2818; color:#f0e0c0; border:none;
+  font-size: 1rem; padding:.6em 2em; border-radius:999px;
+  font-family:inherit; cursor: pointer; align-self: center; margin: 1.2em 0 .4em;
+  box-shadow: 0 3px 0 #2a1a10;
+}
+
+/* ---- Lang toggle (only visible on title) ---- */
+.lang-btn {
+  position: fixed; top: .6em; right: .6em;
+  background: rgba(255,255,255,.6); border: none;
+  font-size: .8rem; padding: .35em .8em; border-radius: 999px;
+  font-family: inherit; cursor: pointer; z-index: 100;
+  font-weight: bold; color:#3d2818;
+  display: none;
+}
+body.on-title .lang-btn { display: block; }
+
+/* ---- Sparkle effect ---- */
+@keyframes sparkle { 0%,100% { transform: scale(.5); opacity: 0; } 50% { transform: scale(1.2); opacity: 1; } }
+.sparkle { position: absolute; font-size: 1.5rem; animation: sparkle .6s ease-out; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<button class="lang-btn" id="langBtn">EN</button>
+
+<div id="title" class="screen active">
+  <div class="deco">🦴 🐚 🦖</div>
+  <h1 data-i="title">かせきほり</h1>
+  <p class="sub" data-i="sub">こすって ほって、<br>かせきを みつけよう</p>
+  <button class="start" id="startBtn" data-i="start">はじめる</button>
+  <div class="deco">🌿 🐟 🐌</div>
+  <p class="age" data-i="age">5〜9さい・10しゅるいの かせき</p>
+</div>
+
+<div id="game" class="screen">
+  <div id="hud">
+    <button class="menu-btn" id="backBtn" data-i="back">← もどる</button>
+    <div class="progress"><div class="progress-bar" id="progBar"></div></div>
+    <button class="menu-btn" id="zukanBtn" data-i="zukan">ずかん</button>
+  </div>
+  <div class="stage-wrap">
+    <canvas id="rock"></canvas>
+  </div>
+  <div id="hint" data-i="hint">ゆびで こすってね</div>
+</div>
+
+<div id="card">
+  <div class="card-inner">
+    <div class="silhouette" id="cardSil"></div>
+    <h2 id="cardName">?</h2>
+    <p class="sci" id="cardSci">?</p>
+    <p class="fact" id="cardFact">?</p>
+    <p class="where" id="cardWhere">?</p>
+    <button class="next-btn" id="nextBtn" data-i="next">つぎを ほる →</button>
+  </div>
+</div>
+
+<div id="collection">
+  <h2 data-i="zukantitle">かせきの ずかん</h2>
+  <p class="count-line" id="countLine">0 / 10</p>
+  <div class="fossil-grid" id="fossilGrid"></div>
+  <button class="close" id="closeCollection" data-i="close">とじる</button>
+</div>
+
+<script>
+// ============ I18N ============
+const i18n = {
+  ja: {
+    title:'かせきほり', sub:'こすって ほって、<br>かせきを みつけよう', start:'はじめる',
+    age:'5〜9さい・10しゅるいの かせき',
+    back:'← もどる', zukan:'ずかん', next:'つぎを ほる →', hint:'ゆびで こすってね',
+    zukantitle:'かせきの ずかん', close:'とじる',
+    countText: (n,t) => `${n} / ${t} みつけた`,
+  },
+  en: {
+    title:'Fossil Dig', sub:'Brush the sand —<br>find a real fossil', start:'Start',
+    age:'Ages 5–9 · 10 fossils to find',
+    back:'← Back', zukan:'Book', next:'Dig next →', hint:'drag to brush',
+    zukantitle:'Fossil Book', close:'Close',
+    countText: (n,t) => `${n} / ${t} found`,
+  },
+};
+let lang = (navigator.language||'ja').toLowerCase().startsWith('en') ? 'en' : 'ja';
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i]').forEach(el => {
+    const k = el.dataset.i; if (i18n[lang][k]!=null) el.innerHTML = i18n[lang][k];
+  });
+  document.getElementById('langBtn').textContent = lang === 'ja' ? 'EN' : '日本語';
+}
+
+// ============ FOSSIL DRAWINGS ============
+// Each draw fn paints a near-black silhouette + faint cream highlights onto stone.
+// Coordinates are relative to a square area (W = H typically).
+
+const FOSSIL_DARK = '#1a1208';
+const FOSSIL_HI   = '#d4a373';
+
+function drawAmmonite(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.strokeStyle = FOSSIL_DARK; ctx.lineCap = 'round';
+  // Logarithmic spiral, drawn as a thick stroke
+  const a = S*0.0095, b = 0.30, maxT = 6.5*Math.PI;
+  ctx.beginPath();
+  for (let t=0; t<=maxT; t+=0.04) {
+    const r = a*Math.exp(b*t);
+    const x = r*Math.cos(t), y = r*Math.sin(t);
+    if (t===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.lineWidth = S*0.045; ctx.stroke();
+  // Inner shell
+  ctx.fillStyle = FOSSIL_DARK;
+  ctx.beginPath(); ctx.arc(0,0,S*0.02,0,Math.PI*2); ctx.fill();
+  // Ridge marks
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.005;
+  for (let t=0.6; t<maxT-0.1; t+=Math.PI/9) {
+    const r = a*Math.exp(b*t);
+    const dirX = Math.cos(t+Math.PI/2), dirY = Math.sin(t+Math.PI/2);
+    ctx.beginPath();
+    ctx.moveTo(r*Math.cos(t)+dirX*S*0.005, r*Math.sin(t)+dirY*S*0.005);
+    ctx.lineTo(r*Math.cos(t)-dirX*S*0.018, r*Math.sin(t)-dirY*S*0.018);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawTrilobite(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.fillStyle = FOSSIL_DARK;
+  // Body: oval tapering
+  ctx.beginPath();
+  ctx.moveTo(0, -S*0.36);
+  ctx.bezierCurveTo(S*0.22, -S*0.32, S*0.20, S*0.18, S*0.06, S*0.34);
+  ctx.lineTo(-S*0.06, S*0.34);
+  ctx.bezierCurveTo(-S*0.20, S*0.18, -S*0.22, -S*0.32, 0, -S*0.36);
+  ctx.fill();
+  // Head shield (semi-circle bigger top)
+  ctx.beginPath();
+  ctx.moveTo(-S*0.22, -S*0.20);
+  ctx.bezierCurveTo(-S*0.22, -S*0.42, S*0.22, -S*0.42, S*0.22, -S*0.20);
+  ctx.closePath();
+  ctx.fill();
+  // Segment lines
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.008; ctx.lineCap='round';
+  for (let i=1; i<=9; i++) {
+    const t = i/10;
+    const y = -S*0.18 + t * S*0.50;
+    const w = S*0.20 * (1 - t*0.7);
+    ctx.beginPath();
+    ctx.moveTo(-w, y); ctx.lineTo(w, y); ctx.stroke();
+  }
+  // Axial lobe (two parallel curves down center)
+  ctx.beginPath();
+  ctx.moveTo(-S*0.04, -S*0.18); ctx.lineTo(-S*0.022, S*0.30);
+  ctx.moveTo( S*0.04, -S*0.18); ctx.lineTo( S*0.022, S*0.30);
+  ctx.stroke();
+  // Eyes (cream dots)
+  ctx.fillStyle = FOSSIL_HI;
+  ctx.beginPath(); ctx.arc(-S*0.10, -S*0.30, S*0.022, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc( S*0.10, -S*0.30, S*0.022, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = FOSSIL_DARK;
+  ctx.beginPath(); ctx.arc(-S*0.10, -S*0.30, S*0.010, 0, Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc( S*0.10, -S*0.30, S*0.010, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawTrexTooth(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.fillStyle = FOSSIL_DARK;
+  // Curved fang (banana-like)
+  ctx.beginPath();
+  ctx.moveTo(0, -S*0.36);                                   // tip
+  ctx.bezierCurveTo(S*0.05, -S*0.20, S*0.12, S*0.05, S*0.10, S*0.32);  // outer down
+  ctx.lineTo(-S*0.12, S*0.32);                              // base
+  ctx.bezierCurveTo(-S*0.10, S*0.05, -S*0.05, -S*0.20, 0, -S*0.36);    // inner up
+  ctx.fill();
+  // Highlight ridge along front
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.007;
+  ctx.beginPath();
+  ctx.moveTo(-S*0.005, -S*0.30);
+  ctx.bezierCurveTo(-S*0.04, -S*0.10, -S*0.06, S*0.10, -S*0.06, S*0.28);
+  ctx.stroke();
+  // Serrations along outer edge
+  ctx.fillStyle = FOSSIL_HI;
+  for (let i=0; i<14; i++) {
+    const t = i/14;
+    const ang = t * Math.PI;
+    const x = S*0.10 - 0.005*S * Math.cos(ang);
+    const y = -S*0.32 + t*S*0.62;
+    // adjust along the right edge (approximation)
+    const ex = S*0.04 + S*0.075 * Math.sin(t*Math.PI*1.0);
+    ctx.beginPath();
+    ctx.arc(ex, y, S*0.005, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawMammothTusk(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.fillStyle = FOSSIL_DARK;
+  ctx.rotate(-0.3);
+  // big curving tusk
+  ctx.beginPath();
+  ctx.moveTo(-S*0.40, -S*0.05);
+  ctx.lineTo(-S*0.40, S*0.06);
+  ctx.bezierCurveTo(-S*0.10, S*0.18, S*0.20, S*0.10, S*0.40, -S*0.18);
+  ctx.bezierCurveTo(S*0.38, -S*0.22, S*0.34, -S*0.20, S*0.30, -S*0.16);
+  ctx.bezierCurveTo(S*0.10, -S*0.04, -S*0.10, S*0.02, -S*0.40, -S*0.05);
+  ctx.fill();
+  // ring marks
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.005;
+  for (let i=0; i<14; i++) {
+    const t = i/14;
+    const cx = -S*0.36 + t*S*0.74;
+    const cy = -S*0.04 + Math.sin(t*Math.PI)*S*0.10 - t*S*0.04;
+    const dy = (1-t)*S*0.04 + S*0.025;
+    ctx.beginPath();
+    ctx.moveTo(cx-S*0.012, cy-dy*0.5);
+    ctx.lineTo(cx+S*0.012, cy+dy*0.4);
+    ctx.stroke();
+  }
+  // Tip
+  ctx.fillStyle = FOSSIL_HI;
+  ctx.beginPath(); ctx.arc(S*0.39, -S*0.18, S*0.012, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+function drawFern(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H*0.55);
+  ctx.fillStyle = FOSSIL_DARK; ctx.strokeStyle = FOSSIL_DARK;
+  // Central rib (curved)
+  ctx.lineWidth = S*0.014; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(S*0.02, S*0.05);
+  ctx.bezierCurveTo(S*0.08, -S*0.12, -S*0.06, -S*0.30, S*0.02, -S*0.46);
+  ctx.stroke();
+  // Tip curl
+  ctx.lineWidth = S*0.010;
+  ctx.beginPath();
+  ctx.arc(-S*0.005, -S*0.46, S*0.018, 0, Math.PI*1.8);
+  ctx.stroke();
+  // Leaflets along rib
+  for (let i=0; i<14; i++) {
+    const t = i/14;
+    const ribY = S*0.05 - t*S*0.50;
+    const ribX = S*0.02 + Math.sin(t*Math.PI*1.2)*S*0.04;
+    const len = S*0.18 * (1 - t*0.55);
+    const baseAng = Math.PI/2 - t*0.3;
+    for (const side of [-1,1]) {
+      ctx.save();
+      ctx.translate(ribX, ribY);
+      ctx.rotate(side * baseAng - 0.2);
+      ctx.beginPath();
+      ctx.ellipse(len*0.5, 0, len*0.5, len*0.18, 0, 0, Math.PI*2);
+      ctx.fill();
+      // veins
+      ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.003;
+      for (let v=1; v<5; v++) {
+        const vt = v/5;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(len*vt, 0);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = FOSSIL_DARK;
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+}
+
+function drawLeaf(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.fillStyle = FOSSIL_DARK;
+  // Pointed-oval leaf shape
+  ctx.beginPath();
+  ctx.moveTo(0, -S*0.40);
+  ctx.bezierCurveTo(S*0.30, -S*0.32, S*0.36, S*0.10, S*0.02, S*0.40);
+  ctx.bezierCurveTo(-S*0.04, S*0.40, -S*0.36, S*0.10, -S*0.30, -S*0.32);
+  ctx.bezierCurveTo(-S*0.18, -S*0.40, -S*0.04, -S*0.42, 0, -S*0.40);
+  ctx.fill();
+  // Stem
+  ctx.beginPath();
+  ctx.fillStyle = FOSSIL_DARK;
+  ctx.moveTo(-S*0.01, S*0.40);
+  ctx.lineTo(S*0.01, S*0.40);
+  ctx.lineTo(S*0.005, S*0.46);
+  ctx.lineTo(-S*0.005, S*0.46);
+  ctx.fill();
+  // Central vein
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.008; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(0, -S*0.36); ctx.bezierCurveTo(0, -S*0.20, S*0.01, S*0.20, S*0.01, S*0.38);
+  ctx.stroke();
+  // Side veins
+  ctx.lineWidth = S*0.005;
+  for (let i=1; i<=8; i++) {
+    const t = i/9;
+    const y = -S*0.36 + t*S*0.72;
+    const len = S*0.30 * Math.sin(t*Math.PI);
+    for (const s of [-1,1]) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.quadraticCurveTo(s*len*0.5, y+S*0.04, s*len, y+S*0.07);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawPteranodon(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.fillStyle = FOSSIL_DARK;
+  // Wings (top view)
+  ctx.beginPath();
+  ctx.moveTo(0, -S*0.04);
+  ctx.bezierCurveTo(-S*0.18, -S*0.10, -S*0.40, -S*0.06, -S*0.46, -S*0.02);
+  ctx.bezierCurveTo(-S*0.42, S*0.04, -S*0.30, S*0.06, -S*0.05, S*0.05);
+  ctx.lineTo(0, -S*0.04);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(0, -S*0.04);
+  ctx.bezierCurveTo(S*0.18, -S*0.10, S*0.40, -S*0.06, S*0.46, -S*0.02);
+  ctx.bezierCurveTo(S*0.42, S*0.04, S*0.30, S*0.06, S*0.05, S*0.05);
+  ctx.lineTo(0, -S*0.04);
+  ctx.fill();
+  // wing finger bones (highlight)
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.005; ctx.lineCap='round';
+  for (const s of [-1,1]) {
+    ctx.beginPath();
+    ctx.moveTo(s*S*0.02, -S*0.02);
+    ctx.lineTo(s*S*0.43, -S*0.04);
+    ctx.stroke();
+  }
+  // Body
+  ctx.fillStyle = FOSSIL_DARK;
+  ctx.beginPath();
+  ctx.ellipse(0, S*0.02, S*0.045, S*0.20, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Head with crest, beak
+  ctx.beginPath();
+  ctx.moveTo(0, -S*0.16);   // top of neck
+  ctx.lineTo(S*0.16, -S*0.30);  // beak tip
+  ctx.lineTo(S*0.04, -S*0.22);  // back of beak
+  ctx.lineTo(-S*0.10, -S*0.36); // crest tip back
+  ctx.lineTo(-S*0.04, -S*0.18); // back of head
+  ctx.closePath();
+  ctx.fill();
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(0, S*0.20);
+  ctx.lineTo(S*0.018, S*0.32);
+  ctx.lineTo(-S*0.018, S*0.32);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFootprint(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2 + S*0.04);
+  ctx.fillStyle = FOSSIL_DARK;
+  // Heel pad (rounded)
+  ctx.beginPath();
+  ctx.ellipse(0, S*0.16, S*0.12, S*0.14, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Three toes splayed
+  for (const i of [-1,0,1]) {
+    const ang = i * 0.55;
+    ctx.save();
+    ctx.translate(Math.sin(ang)*S*0.18, -Math.cos(ang)*S*0.16);
+    ctx.rotate(ang);
+    // toe pad
+    ctx.beginPath();
+    ctx.ellipse(0, 0, S*0.06, S*0.14, 0, 0, Math.PI*2);
+    ctx.fill();
+    // claw
+    ctx.beginPath();
+    ctx.moveTo(0, -S*0.18);
+    ctx.lineTo(S*0.030, -S*0.13);
+    ctx.lineTo(-S*0.030, -S*0.13);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+  // Some highlight cracks
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.004;
+  ctx.beginPath();
+  ctx.moveTo(-S*0.08, S*0.16); ctx.lineTo(S*0.08, S*0.18);
+  ctx.moveTo(0, S*0.06); ctx.lineTo(0, S*0.22);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawNipponites(ctx, W, H) {
+  // Heteromorph ammonite — irregular knot shape
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.strokeStyle = FOSSIL_DARK; ctx.lineCap = 'round';
+  ctx.lineWidth = S*0.045;
+  ctx.beginPath();
+  // Parametric pretzel/knot — visible loops crossing
+  for (let t=0; t<=Math.PI*4; t+=0.04) {
+    const x = S*0.25*Math.sin(t) + S*0.10*Math.sin(2.5*t);
+    const y = S*0.22*Math.cos(2*t) * 0.6 + S*0.12*Math.sin(t*1.5);
+    if (t===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  // Ribs along the tube
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.005;
+  for (let t=0.1; t<Math.PI*4; t+=0.18) {
+    const x = S*0.25*Math.sin(t) + S*0.10*Math.sin(2.5*t);
+    const y = S*0.22*Math.cos(2*t) * 0.6 + S*0.12*Math.sin(t*1.5);
+    // small perpendicular tick
+    const tx = S*0.25*Math.cos(t) + S*0.25*Math.cos(2.5*t);
+    const ty = -S*0.44*Math.sin(2*t)*0.6 + S*0.18*Math.cos(t*1.5);
+    const m = Math.hypot(tx,ty)||1;
+    const nx = -ty/m, ny = tx/m;
+    ctx.beginPath();
+    ctx.moveTo(x-nx*S*0.022, y-ny*S*0.022);
+    ctx.lineTo(x+nx*S*0.022, y+ny*S*0.022);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawDesmostylus(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.fillStyle = FOSSIL_DARK;
+  // Tooth cluster: 6 vertical pillars side-by-side, with flat tops showing rings
+  const N = 6;
+  const colW = S*0.05;
+  const colH = S*0.46;
+  const total = N*colW;
+  ctx.translate(-total/2 + colW/2, -colH/2);
+  for (let i=0;i<N;i++) {
+    const x = i*colW;
+    // pillar (tall capsule)
+    ctx.beginPath();
+    ctx.moveTo(x-colW*0.42, 0);
+    ctx.lineTo(x+colW*0.42, 0);
+    ctx.lineTo(x+colW*0.42, colH);
+    ctx.lineTo(x-colW*0.42, colH);
+    ctx.closePath();
+    ctx.fill();
+    // top dome
+    ctx.beginPath();
+    ctx.arc(x, 0, colW*0.42, Math.PI, Math.PI*2);
+    ctx.fill();
+    // bottom dome
+    ctx.beginPath();
+    ctx.arc(x, colH, colW*0.42, 0, Math.PI);
+    ctx.fill();
+    // ring grooves on top of each pillar (tan rings)
+    ctx.fillStyle = FOSSIL_HI;
+    for (let r=0; r<6; r++) {
+      const ry = colH*0.10 + r*colH*0.16;
+      ctx.beginPath();
+      ctx.ellipse(x, ry, colW*0.32, colW*0.07, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.fillStyle = FOSSIL_DARK;
+  }
+  ctx.restore();
+}
+
+function drawArchaeopteryx(ctx, W, H) {
+  const S = Math.min(W,H);
+  ctx.save(); ctx.translate(W/2, H/2);
+  ctx.fillStyle = FOSSIL_DARK;
+  // Body (oval)
+  ctx.save(); ctx.rotate(-0.18);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, S*0.16, S*0.06, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+  // Head + beak
+  ctx.beginPath();
+  ctx.ellipse(S*0.16, -S*0.10, S*0.05, S*0.04, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(S*0.20, -S*0.11);
+  ctx.lineTo(S*0.26, -S*0.10);
+  ctx.lineTo(S*0.20, -S*0.07);
+  ctx.fill();
+  // Long bony tail
+  ctx.beginPath();
+  ctx.moveTo(-S*0.13, S*0.02);
+  ctx.lineTo(-S*0.40, -S*0.04);
+  ctx.lineTo(-S*0.40, S*0.05);
+  ctx.lineTo(-S*0.13, S*0.06);
+  ctx.fill();
+  // Tail feathers (highlight strips)
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.005; ctx.lineCap='round';
+  for (let i=0; i<8; i++) {
+    const t = i/8;
+    const x = -S*0.14 - t*S*0.26;
+    const y0 = -S*0.04 + t*0.01;
+    ctx.beginPath();
+    ctx.moveTo(x, y0); ctx.lineTo(x, y0 + S*0.10);
+    ctx.stroke();
+  }
+  // Wing
+  ctx.fillStyle = FOSSIL_DARK;
+  ctx.beginPath();
+  ctx.moveTo(S*0.06, -S*0.03);
+  ctx.lineTo(-S*0.20, -S*0.20);
+  ctx.lineTo(-S*0.04, -S*0.04);
+  ctx.closePath();
+  ctx.fill();
+  // Wing feather strips
+  ctx.strokeStyle = FOSSIL_HI; ctx.lineWidth = S*0.004;
+  for (let i=0; i<7; i++) {
+    const t = i/7;
+    const sx = S*0.04 - t*S*0.22;
+    const sy = -S*0.04 - t*S*0.14;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(sx + S*0.005, sy - S*0.06);
+    ctx.stroke();
+  }
+  // Legs
+  ctx.strokeStyle = FOSSIL_DARK; ctx.lineWidth = S*0.011;
+  ctx.beginPath();
+  ctx.moveTo(S*0.02, S*0.04); ctx.lineTo(S*0.04, S*0.18);
+  ctx.lineTo(S*0.08, S*0.18);
+  ctx.moveTo(-S*0.04, S*0.04); ctx.lineTo(-S*0.06, S*0.18);
+  ctx.lineTo(-S*0.02, S*0.18);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// ============ FOSSIL DATA ============
+const FOSSILS = [
+  { id:'ammonite',
+    name:{ja:'アンモナイト', en:'Ammonite'}, sci:'Ammonoidea',
+    fact:{ja:'うずまきの からを もつ、いかの なかま。きょうりゅうの 時代、海に たくさん いたよ。',
+          en:'A spiral-shelled relative of squid that filled ancient seas in the dinosaur age.'},
+    where:{ja:'世界中・約4億〜6500万年前', en:'Worldwide · 400–66 Mya'},
+    draw:drawAmmonite },
+  { id:'trilobite',
+    name:{ja:'三葉虫', en:'Trilobite'}, sci:'Trilobita',
+    fact:{ja:'海の だんごむしの ような いきもの。きょうりゅうより ずーっと まえから いたよ。',
+          en:'A pillbug-like sea creature that lived long before the dinosaurs.'},
+    where:{ja:'世界中・約5.2億〜2.5億年前', en:'Worldwide · 520–250 Mya'},
+    draw:drawTrilobite },
+  { id:'trex_tooth',
+    name:{ja:'ティラノサウルスの歯', en:'T. rex Tooth'}, sci:'Tyrannosaurus rex',
+    fact:{ja:'バナナくらい おおきい歯。きょうりゅうの王さまの くちには 60本も あったよ。',
+          en:"A tooth as long as a banana. The king of dinosaurs had about 60 of them."},
+    where:{ja:'北米・約6800万年前', en:'N. America · ~68 Mya'},
+    draw:drawTrexTooth },
+  { id:'mammoth_tusk',
+    name:{ja:'マンモスの牙', en:'Mammoth Tusk'}, sci:'Mammuthus primigenius',
+    fact:{ja:'氷の時代に いた、毛むくじゃらの大きな ぞうの牙。シベリアの氷から 見つかるよ。',
+          en:"A tusk from the woolly elephant of the Ice Age — sometimes still found in Siberian ice."},
+    where:{ja:'ユーラシア・北米・40万〜4千年前', en:'Eurasia & N. America · 400k–4k yrs ago'},
+    draw:drawMammothTusk },
+  { id:'fern',
+    name:{ja:'シダの葉', en:'Fern'}, sci:'Filicopsida',
+    fact:{ja:'3億年も まえから 地球に いる古い しょくぶつ。きょうりゅうも たべて いたかも。',
+          en:'An ancient plant — around for 300 million years. Dinosaurs probably ate it.'},
+    where:{ja:'世界中・約3億年前〜現代', en:'Worldwide · 300 Mya–today'},
+    draw:drawFern },
+  { id:'leaf',
+    name:{ja:'葉っぱの あと', en:'Leaf Imprint'}, sci:'Phyllite',
+    fact:{ja:'むかしの森の 木の葉が、やわらかい泥に押されて、石に なって のこったよ。',
+          en:'A leaf from an ancient forest, pressed into mud and turned to stone.'},
+    where:{ja:'世界中・約1億年前〜', en:'Worldwide · ~100 Mya–'},
+    draw:drawLeaf },
+  { id:'pteranodon',
+    name:{ja:'プテラノドン', en:'Pteranodon'}, sci:'Pteranodon longiceps',
+    fact:{ja:'きょうりゅうじゃないよ。空を とんでいた 大きな は虫類で、はねは 7メートルも あった！',
+          en:"Not a dinosaur — a flying reptile with a 7-meter wingspan."},
+    where:{ja:'北米・約8500万年前', en:'N. America · ~85 Mya'},
+    draw:drawPteranodon },
+  { id:'footprint',
+    name:{ja:'きょうりゅうの 足あと', en:'Dinosaur Footprint'}, sci:'Theropoda ichnite',
+    fact:{ja:'きょうりゅうが やわらかい泥を 歩いた あとが、石に なって のこったんだ。',
+          en:"A dinosaur walked on soft mud — the footprint slowly turned to stone."},
+    where:{ja:'世界中・約2億〜6500万年前', en:'Worldwide · 200–66 Mya'},
+    draw:drawFootprint },
+  { id:'nipponites',
+    name:{ja:'ニッポニテス', en:'Nipponites'}, sci:'Nipponites mirabilis',
+    fact:{ja:'日本で みつかった、ぐるぐる ねじれた アンモナイト。北海道の たいせつな たから。',
+          en:'A twisted, knot-shaped ammonite first found in Hokkaido — a treasure of Japanese paleontology.'},
+    where:{ja:'北海道・約8500万年前', en:'Hokkaido, Japan · ~85 Mya'},
+    draw:drawNipponites },
+  { id:'desmostylus',
+    name:{ja:'デスモスチルス', en:'Desmostylus'}, sci:'Desmostylus hesperus',
+    fact:{ja:'「束ねた柱」のような 歯を もつ、海に すんでいた ふしぎな ほにゅう類。日本でも 化石が 見つかるよ。',
+          en:"A strange sea mammal whose teeth look like 'bundled columns' — its fossils are found in Japan too."},
+    where:{ja:'北太平洋・約2300万〜千万年前', en:'N. Pacific · 23–10 Mya'},
+    draw:drawDesmostylus },
+  { id:'archaeopteryx',
+    name:{ja:'始祖鳥', en:'Archaeopteryx'}, sci:'Archaeopteryx lithographica',
+    fact:{ja:'きょうりゅうと 鳥の あいだの 生きもの。羽も はねも 歯も あったんだ。',
+          en:'A creature between dinosaur and bird — it had feathers, wings, AND teeth.'},
+    where:{ja:'ドイツ・約1.5億年前', en:'Germany · ~150 Mya'},
+    draw:drawArchaeopteryx },
+];
+
+// ============ STATE ============
+const stage = {
+  bg: null, sand: null, mainCtx: null, dpr: 1,
+  fossil: null, found: false, dragging: false,
+  brushSize: 30, threshold: 0.78,
+  pixelTotal: 0, currentRatio: 0,
+};
+const STORAGE_KEY = 'kasekiCollection_v1';
+
+function loadCollection() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+  catch (e) { return []; }
+}
+function saveFound(id) {
+  const c = loadCollection();
+  if (!c.includes(id)) { c.push(id); localStorage.setItem(STORAGE_KEY, JSON.stringify(c)); }
+}
+
+// ============ CANVAS SETUP ============
+function setupCanvas() {
+  const c = document.getElementById('rock');
+  const dpr = stage.dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  // Use the wrapper's actual rendered size for safety
+  const wrap = c.parentElement;
+  const cssW = wrap.clientWidth;
+  const cssH = wrap.clientHeight;
+  c.width = Math.round(cssW * dpr);
+  c.height = Math.round(cssH * dpr);
+  // (CSS sizing is from layout)
+  stage.mainCtx = c.getContext('2d');
+
+  stage.bg = document.createElement('canvas');
+  stage.bg.width = c.width; stage.bg.height = c.height;
+  stage.sand = document.createElement('canvas');
+  stage.sand.width = c.width; stage.sand.height = c.height;
+}
+
+function drawStoneBg(ctx, W, H) {
+  const grad = ctx.createRadialGradient(W*0.5, H*0.4, 0, W*0.5, H*0.5, W*0.75);
+  grad.addColorStop(0, '#7a5c42'); grad.addColorStop(1, '#3d2818');
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+  // mottled dots
+  for (let i=0; i<4500; i++) {
+    const x = Math.random()*W, y = Math.random()*H;
+    const r = Math.random()*3 + 0.5;
+    const lum = 60 + Math.random()*60;
+    ctx.fillStyle = `rgba(${lum+30},${lum},${lum-15},${.25 + Math.random()*0.3})`;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  // cracks
+  ctx.strokeStyle = 'rgba(20,10,4,0.45)'; ctx.lineWidth = 1.2;
+  for (let i=0; i<10; i++) {
+    let x = Math.random()*W, y = Math.random()*H;
+    ctx.beginPath(); ctx.moveTo(x,y);
+    for (let j=0; j<6; j++) {
+      x += (Math.random()-0.5)*W*0.10;
+      y += (Math.random()-0.5)*W*0.10;
+      ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+}
+
+function drawSand(ctx, W, H) {
+  // Base sand color
+  ctx.fillStyle = '#c89868'; ctx.fillRect(0,0,W,H);
+  // Rough texture (lots of small grains)
+  for (let i=0; i<W*H/600; i++) {
+    const x = Math.random()*W, y = Math.random()*H;
+    const r = Math.random()*2.5 + 0.4;
+    const lum = 130 + Math.random()*80;
+    ctx.fillStyle = `rgba(${lum+25},${lum},${lum-30},${.35 + Math.random()*.45})`;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  }
+  // Pebbles
+  for (let i=0; i<40; i++) {
+    const x = Math.random()*W, y = Math.random()*H;
+    ctx.fillStyle = `rgba(${60+Math.random()*30},${40+Math.random()*20},${20+Math.random()*15},.6)`;
+    ctx.beginPath(); ctx.arc(x,y,2.5+Math.random()*4,0,Math.PI*2); ctx.fill();
+  }
+  // Subtle highlight specks (mica-y)
+  for (let i=0; i<300; i++) {
+    const x = Math.random()*W, y = Math.random()*H;
+    ctx.fillStyle = `rgba(255,240,200,${.2+Math.random()*.3})`;
+    ctx.beginPath(); ctx.arc(x,y,Math.random()+0.5,0,Math.PI*2); ctx.fill();
+  }
+}
+
+// ============ DIG ROUND ============
+function pickFossil() {
+  const collected = loadCollection();
+  const unfound = FOSSILS.filter(f => !collected.includes(f.id));
+  // 70% chance pick unfound (if any), else random
+  const pool = (unfound.length>0 && Math.random()<0.75) ? unfound : FOSSILS;
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+function startDig() {
+  setupCanvas();
+  stage.fossil = pickFossil();
+  stage.found = false;
+  stage.currentRatio = 0;
+  const W = stage.bg.width, H = stage.bg.height;
+  const bgCtx = stage.bg.getContext('2d');
+  drawStoneBg(bgCtx, W, H);
+  // draw fossil in stone with slight random offset/rotation for variety
+  bgCtx.save();
+  bgCtx.translate(W*0.5 + (Math.random()-0.5)*W*0.06, H*0.5 + (Math.random()-0.5)*H*0.06);
+  bgCtx.rotate((Math.random()-0.5)*0.5);
+  bgCtx.translate(-W*0.5, -H*0.5);
+  stage.fossil.draw(bgCtx, W, H);
+  bgCtx.restore();
+  // sand
+  const sandCtx = stage.sand.getContext('2d');
+  sandCtx.globalCompositeOperation = 'source-over';
+  sandCtx.clearRect(0,0,W,H);
+  drawSand(sandCtx, W, H);
+  stage.pixelTotal = W*H;
+  redraw();
+  document.getElementById('progBar').style.width = '0%';
+  // Hint
+  const hint = document.getElementById('hint');
+  hint.classList.remove('fade');
+  setTimeout(()=> hint.classList.add('fade'), 2200);
+}
+
+function redraw() {
+  const ctx = stage.mainCtx;
+  ctx.drawImage(stage.bg, 0, 0);
+  ctx.drawImage(stage.sand, 0, 0);
+}
+
+// ============ BRUSH ============
+function brushAt(cssX, cssY) {
+  const r = stage.brushSize * stage.dpr;
+  const ctx = stage.sand.getContext('2d');
+  const x = cssX * stage.dpr, y = cssY * stage.dpr;
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+  grad.addColorStop(0, 'rgba(0,0,0,1)');
+  grad.addColorStop(0.65, 'rgba(0,0,0,0.75)');
+  grad.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  redraw();
+}
+
+// stroke smoothing: interpolate between samples
+let lastPt = null;
+function brushStroke(x, y) {
+  if (lastPt) {
+    const dx = x - lastPt.x, dy = y - lastPt.y;
+    const d = Math.hypot(dx, dy);
+    const step = stage.brushSize * 0.5;
+    const n = Math.max(1, Math.ceil(d / step));
+    for (let i=1; i<=n; i++) {
+      brushAt(lastPt.x + dx*i/n, lastPt.y + dy*i/n);
+    }
+  } else {
+    brushAt(x, y);
+  }
+  lastPt = { x, y };
+}
+
+let lastCheck = 0;
+function maybeCheckProgress() {
+  const now = Date.now();
+  if (now - lastCheck < 220) return;
+  lastCheck = now;
+  // sample-down to 64x64 for cheap alpha count
+  const W = stage.sand.width, H = stage.sand.height;
+  const sample = 64;
+  const tmp = document.createElement('canvas');
+  tmp.width = sample; tmp.height = sample;
+  const tctx = tmp.getContext('2d');
+  tctx.drawImage(stage.sand, 0,0,W,H, 0,0,sample,sample);
+  const data = tctx.getImageData(0,0,sample,sample).data;
+  let cleared = 0;
+  for (let i=3; i<data.length; i+=4) if (data[i] < 30) cleared++;
+  const ratio = cleared / (sample*sample);
+  stage.currentRatio = ratio;
+  document.getElementById('progBar').style.width =
+    Math.min(100, Math.round(ratio*100/stage.threshold)) + '%';
+  if (ratio > stage.threshold && !stage.found) revealFossil();
+}
+
+function revealFossil() {
+  stage.found = true;
+  saveFound(stage.fossil.id);
+  // sparkle
+  spawnSparkles();
+  setTimeout(showCard, 350);
+}
+
+function spawnSparkles() {
+  const wrap = document.querySelector('.stage-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const N = 8;
+  for (let i=0;i<N;i++) {
+    const sp = document.createElement('div');
+    sp.className = 'sparkle';
+    sp.textContent = ['✦','✧','✶','★'][i%4];
+    sp.style.color = ['#fff8e0','#ffd76a','#fff'][i%3];
+    sp.style.left = (rect.left + rect.width*Math.random()) + 'px';
+    sp.style.top  = (rect.top  + rect.height*Math.random()) + 'px';
+    sp.style.animationDelay = (i*0.05) + 's';
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(), 700 + i*60);
+  }
+}
+
+function showCard() {
+  document.getElementById('cardName').textContent = stage.fossil.name[lang];
+  document.getElementById('cardSci').textContent = stage.fossil.sci;
+  document.getElementById('cardFact').textContent = stage.fossil.fact[lang];
+  document.getElementById('cardWhere').textContent = stage.fossil.where[lang];
+  const sil = document.getElementById('cardSil');
+  sil.innerHTML = '';
+  const cv = document.createElement('canvas');
+  cv.width = 260; cv.height = 260;
+  cv.style.width = '100%'; cv.style.height = '100%';
+  const cx = cv.getContext('2d');
+  cx.fillStyle = '#d4a373'; cx.fillRect(0,0,260,260);
+  // subtle stone texture in card
+  for (let i=0; i<300; i++) {
+    cx.fillStyle = `rgba(${100+Math.random()*40},${70+Math.random()*30},${50+Math.random()*20},${.1+Math.random()*.2})`;
+    cx.beginPath(); cx.arc(Math.random()*260,Math.random()*260,Math.random()*2,0,Math.PI*2); cx.fill();
+  }
+  stage.fossil.draw(cx, 260, 260);
+  sil.appendChild(cv);
+  document.getElementById('card').classList.add('active');
+}
+
+// ============ COLLECTION ============
+function showCollection() {
+  const c = loadCollection();
+  document.getElementById('countLine').textContent = i18n[lang].countText(c.length, FOSSILS.length);
+  const grid = document.getElementById('fossilGrid');
+  grid.innerHTML = '';
+  FOSSILS.forEach(f => {
+    const cell = document.createElement('div');
+    cell.className = 'fossil-cell' + (c.includes(f.id) ? ' found' : '');
+    const cv = document.createElement('canvas');
+    cv.width = 100; cv.height = 100;
+    const cx = cv.getContext('2d');
+    cx.fillStyle = c.includes(f.id) ? '#d4a373' : '#a08868';
+    cx.fillRect(0,0,100,100);
+    f.draw(cx, 100, 100);
+    cell.appendChild(cv);
+    if (c.includes(f.id)) {
+      const lab = document.createElement('div');
+      lab.className = 'label';
+      lab.textContent = f.name[lang];
+      cell.appendChild(lab);
+    } else {
+      const q = document.createElement('div'); q.className = 'qmark'; q.textContent='?';
+      cell.appendChild(q);
+    }
+    grid.appendChild(cell);
+  });
+  document.getElementById('collection').classList.add('active');
+}
+
+// ============ POINTER ============
+function pointerXY(e, canvasEl) {
+  const r = canvasEl.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: t.clientX - r.left, y: t.clientY - r.top };
+}
+function bindCanvas() {
+  const c = document.getElementById('rock');
+  const onDown = (e) => {
+    e.preventDefault();
+    if (stage.found) return;
+    stage.dragging = true; lastPt = null;
+    const p = pointerXY(e, c); brushStroke(p.x, p.y); maybeCheckProgress();
+  };
+  const onMove = (e) => {
+    if (!stage.dragging) return;
+    e.preventDefault();
+    const p = pointerXY(e, c); brushStroke(p.x, p.y); maybeCheckProgress();
+  };
+  const onUp = () => { stage.dragging = false; lastPt = null; maybeCheckProgress(); };
+  c.addEventListener('mousedown', onDown);
+  c.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  c.addEventListener('touchstart', onDown, {passive:false});
+  c.addEventListener('touchmove', onMove, {passive:false});
+  window.addEventListener('touchend', onUp);
+  window.addEventListener('touchcancel', onUp);
+}
+
+// ============ INIT ============
+let bound = false;
+function gotoTitle() {
+  document.getElementById('title').classList.add('active');
+  document.getElementById('game').classList.remove('active');
+  document.getElementById('collection').classList.remove('active');
+  document.getElementById('card').classList.remove('active');
+  document.body.classList.add('on-title');
+}
+function gotoGame() {
+  document.getElementById('title').classList.remove('active');
+  document.getElementById('game').classList.add('active');
+  document.body.classList.remove('on-title');
+}
+document.getElementById('startBtn').addEventListener('click', () => {
+  gotoGame();
+  startDig();
+  if (!bound) { bindCanvas(); bound = true; }
+});
+document.getElementById('backBtn').addEventListener('click', gotoTitle);
+document.getElementById('zukanBtn').addEventListener('click', showCollection);
+document.getElementById('closeCollection').addEventListener('click', () => {
+  document.getElementById('collection').classList.remove('active');
+});
+document.getElementById('nextBtn').addEventListener('click', () => {
+  document.getElementById('card').classList.remove('active');
+  startDig();
+});
+document.getElementById('langBtn').addEventListener('click', () => {
+  lang = lang==='ja' ? 'en' : 'ja'; applyLang();
+});
+window.addEventListener('resize', () => {
+  // Rebuild stage sized to current viewport if game active
+  if (document.getElementById('game').classList.contains('active')) {
+    const found = stage.found;
+    const fossil = stage.fossil;
+    setupCanvas();
+    const W = stage.bg.width, H = stage.bg.height;
+    const bgCtx = stage.bg.getContext('2d');
+    drawStoneBg(bgCtx, W, H);
+    if (fossil) fossil.draw(bgCtx, W, H);
+    const sandCtx = stage.sand.getContext('2d');
+    sandCtx.clearRect(0,0,W,H);
+    drawSand(sandCtx, W, H);
+    redraw();
+    if (found) document.getElementById('progBar').style.width='100%';
+  }
+});
+
+applyLang();
+document.body.classList.add('on-title');
+</script>
+</body>
+</html>
