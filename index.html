@@ -1098,6 +1098,76 @@ window.addEventListener('resize', () => {
 
 applyLang();
 document.body.classList.add('on-title');
+
+// ---- Demo mode for deterministic GIF capture ----
+(function(){
+  const params = new URLSearchParams(location.search);
+  const fr = params.get('frame');
+  if (fr === null) return;
+  const N = parseInt(fr, 10) || 0;
+  // Hide HUD and lang button in demo mode; make canvas fill viewport
+  const style = document.createElement('style');
+  style.textContent =
+    '#hud,.lang-btn,#hint{display:none!important}'
+    + 'html,body{margin:0!important;padding:0!important;background:#3d2818!important;overflow:hidden!important}'
+    + '#game.screen{padding:0!important;justify-content:flex-start!important;align-items:stretch!important}'
+    + '#game .stage-wrap{width:100vw!important;height:100vh!important;max-width:none!important;max-height:none!important}'
+    + '#rock{width:100vw!important;height:100vh!important}';
+  document.head.appendChild(style);
+  // Seed Math.random so bg/sand textures are identical between frames
+  let seed = 1234567;
+  Math.random = function() {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  // Force language
+  if (params.get('lang') === 'en') { lang = 'en'; applyLang(); }
+  else { lang = 'ja'; applyLang(); }
+
+  // Frames 0..1: title only
+  if (N < 2) return;
+
+  // Force a specific fossil for visual consistency
+  const targetId = params.get('fossil') || 'nipponites';
+  const targetFossil = FOSSILS.find(f => f.id === targetId) || FOSSILS[0];
+  // override pickFossil
+  window.pickFossil = () => targetFossil;
+  // override sand ratio random offset
+  document.getElementById('startBtn').click();
+
+  // After mount, advance brush state to frame N
+  requestAnimationFrame(() => {
+    const c = document.getElementById('rock');
+    const r = c.getBoundingClientRect();
+    const cx = r.width/2, cy = r.height/2;
+    // Brush count = (N - 2) per frame; spiral pattern
+    const FRAMES_BRUSH_END = 22;
+    let strokes = 0;
+    if (N >= 2) {
+      const t = Math.min(1, (N - 2) / (FRAMES_BRUSH_END - 2));
+      // Animate from no strokes to ~full sweep
+      const totalStrokes = Math.round(t * 230);
+      strokes = totalStrokes;
+      const baseAngle = 0;
+      for (let i = 0; i < totalStrokes; i++) {
+        const ti = i * 0.34;
+        const radius = i * 1.10 + 6;
+        const x = cx + Math.cos(ti + baseAngle) * radius * 0.85;
+        const y = cy + Math.sin(ti + baseAngle) * radius * 0.85;
+        brushAt(x, y);
+      }
+    }
+    // Card phase
+    if (N >= 23) {
+      stage.found = true;
+      showCard();
+    }
+    // Hide hint
+    document.getElementById('hint').style.display = 'none';
+    // Mark page ready (Chrome headless can use this)
+    document.body.dataset.ready = '1';
+  });
+})();
 </script>
 </body>
 </html>
